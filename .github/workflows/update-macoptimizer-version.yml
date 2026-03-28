@@ -62,7 +62,7 @@ jobs:
       - name: Download Apple Silicon DMG
         if: steps.version_check.outputs.should_update == 'true'
         run: |
-          curl -f -L -o /tmp/macoptimizer-arm64.dmg "https://github.com/ddlmanus/MacOptimizer/releases/download/v${{ steps.version_check.outputs.new_version }}/MacOptimizer_v${{ steps.version_check.outputs.new_version }}_AppleSilicon.dmg"
+          curl -f -L -o /tmp/macoptimizer-arm64.dmg "https://github.com/ddlmanus/MacOptimizer/releases/download/v${{ steps.version_check.outputs.new_version }}/Mac._v${{ steps.version_check.outputs.new_version }}_AppleSilicon.dmg"
           if [ ! -s /tmp/macoptimizer-arm64.dmg ] || [ $(stat -c%s /tmp/macoptimizer-arm64.dmg) -lt 100000 ]; then
             echo "Apple Silicon DMG file is missing or too small"
             exit 1
@@ -71,7 +71,7 @@ jobs:
       - name: Download Intel DMG
         if: steps.version_check.outputs.should_update == 'true'
         run: |
-          curl -f -L -o /tmp/macoptimizer-x64.dmg "https://github.com/ddlmanus/MacOptimizer/releases/download/v${{ steps.version_check.outputs.new_version }}/MacOptimizer_v${{ steps.version_check.outputs.new_version }}_Intel.dmg"
+          curl -f -L -o /tmp/macoptimizer-x64.dmg "https://github.com/ddlmanus/MacOptimizer/releases/download/v${{ steps.version_check.outputs.new_version }}/Mac._v${{ steps.version_check.outputs.new_version }}_Intel.dmg"
           if [ ! -s /tmp/macoptimizer-x64.dmg ] || [ $(stat -c%s /tmp/macoptimizer-x64.dmg) -lt 100000 ]; then
             echo "Intel DMG file is missing or too small"
             exit 1

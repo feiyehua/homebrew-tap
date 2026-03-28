@@ -124,7 +124,7 @@ brew uninstall rime-wanxiang-updater
 | [go-pkg](Casks/go-pkg.rb) | Go 编程语言（官方 pkg 安装器） | `brew install --cask tinypkg/tap/go-pkg` | `1.24.3` | 🍎 Intel & ARM |
 | [blink1control2](Casks/blink1control2.rb) | USB RGB LED 控制工具 | `brew install --cask tinypkg/tap/blink1control2` | `2.2.9` | 🍎 Intel & ARM |
 | [lzc-client-desktop](Casks/lzc-client-desktop.rb) | 懒猫微服桌面客户端 | `brew install --cask tinypkg/tap/lzc-client-desktop` | `1.6.7` | 🍎 Intel & ARM |
-| [macoptimizer](Casks/macoptimizer.rb) | macOS 系统清理优化工具 | `brew install --cask tinypkg/tap/macoptimizer` | `3.0.1` | 🍎 Intel & ARM |
+| [macoptimizer](Casks/macoptimizer.rb) | macOS 系统清理优化工具 | `brew install --cask tinypkg/tap/macoptimizer` | `4.0.6` | 🍎 Intel & ARM |
 
 ### ⚙️ 命令行工具 (Formulas)
 

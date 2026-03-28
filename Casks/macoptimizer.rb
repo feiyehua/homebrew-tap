@@ -1,15 +1,15 @@
 cask "macoptimizer" do
-  version "3.0.0"
+  version "4.0.5"
 
   on_arm do
     sha256 "PLACEHOLDER_SHA256_ARM"
 
-    url "https://github.com/ddlmanus/MacOptimizer/releases/download/v#{version}/MacOptimizer_v#{version}_AppleSilicon.dmg"
+    url "https://github.com/ddlmanus/MacOptimizer/releases/download/v#{version}/Mac._v#{version}_AppleSilicon.dmg"
   end
   on_intel do
     sha256 "PLACEHOLDER_SHA256_INTEL"
 
-    url "https://github.com/ddlmanus/MacOptimizer/releases/download/v#{version}/MacOptimizer_v#{version}_Intel.dmg"
+    url "https://github.com/ddlmanus/MacOptimizer/releases/download/v#{version}/Mac._v#{version}_Intel.dmg"
   end
 
   name "MacOptimizer"
