@@ -1,13 +1,13 @@
 cask "recordly" do
-  version "1.1.21"
+  version "1.1.23"
 
   on_arm do
-    sha256 "62441e1e87f937108024612299c121862ddcc663203d282a0442b3b27ddb7f37"
+    sha256 "d4e44d8512ba93d6bb4aeac34835f8609b5e30ce33524f18334848d5cbe255c9"
 
     url "https://github.com/webadderall/Recordly/releases/download/v#{version}/Recordly-arm64.dmg"
   end
   on_intel do
-    sha256 "e5eb4e179396ef5a95d7ee1ad1f2ef5fa8b5615f60175554f474dbfaeaa60d1f"
+    sha256 "f8934931563b155b55325c7a31a2ff44c007bc3d49c04a945c86a529b7046b7f"
 
     url "https://github.com/webadderall/Recordly/releases/download/v#{version}/Recordly-x64.dmg"
   end
