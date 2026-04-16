@@ -40,6 +40,7 @@ brew install --cask tinypkg/tap/shichizip-zs        # ShichiZip ZS - 7-Zip with 
 
 ## 命令行工具
 brew install tinypkg/tap/rime-wanxiang-updater      # 万象拼音输入法更新工具
+brew install tinypkg/tap/snout                       # Rime 输入法初始化与更新工具
 brew install tinypkg/tap/mise-bin                   # Mise - 多语言版本管理工具
 brew install tinypkg/tap/cc-switch-cli              # CC Switch CLI - Claude Code/Codex/Gemini CLI 助手工具
 ```
@@ -86,8 +87,10 @@ brew install --cask winmux             # macOS 窗口管理器
 **命令行工具 (Formulas)**
 
 ```bash
-# 万象拼音输入法更新工具
 brew install rime-wanxiang-updater
+
+# Rime 输入法初始化与更新工具 (万象/雾凇/白霜/薄荷)
+brew install snout
 
 # Mise - 多语言版本管理工具
 brew install mise-bin
@@ -146,6 +149,7 @@ brew uninstall rime-wanxiang-updater
 | 软件名称 | 说明 | 一键安装命令 | 版本 | 架构支持 |
 |---------|------|-------------|------|----------|
 | [rime-wanxiang-updater](Formula/rime-wanxiang-updater.rb) | 万象拼音输入法词库更新工具 | `brew install tinypkg/tap/rime-wanxiang-updater` | `0.6.10` | 🍎 Intel & ARM |
+| [snout](Formula/snout.rb) | Rime 输入法初始化与更新工具 (万象/雾凇/白霜/薄荷) | `brew install tinypkg/tap/snout` | `0.1.1` | 🍎 Intel & ARM |
 | [mise-bin](Formula/mise-bin.rb) | 多语言版本管理工具 (polyglot version manager) | `brew install tinypkg/tap/mise-bin` | `2024.1.0` | 🍎 Intel & ARM |
 | [cc-switch-cli](Formula/cc-switch-cli.rb) | Claude Code/Codex/Gemini CLI 助手工具 | `brew install tinypkg/tap/cc-switch-cli` | `5.2.0` | 🍎 Intel & ARM |
 
