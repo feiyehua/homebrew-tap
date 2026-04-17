@@ -21,6 +21,7 @@ brew install --cask tinypkg/tap/confirmo            # Confirmo - AI 编程助手
 brew install --cask tinypkg/tap/cc-switch           # CC Switch - Claude Code 配置管理工具
 brew install --cask tinypkg/tap/antigravity-tools   # Antigravity Tools - AI 服务账号管理工具
 brew install --cask tinypkg/tap/noi                 # Noi - AI 工具集合
+brew install --cask tinypkg/tap/cmux                # cmux - Lightweight macOS terminal for AI coding agents
 
 ## 输入法
 brew install --cask tinypkg/tap/fcitx5-pinyin       # Fcitx5 输入法 - 拼音版
@@ -66,6 +67,7 @@ brew install --cask confirmo           # AI 编程助手（桌面版）
 brew install --cask cc-switch          # Claude Code 配置管理工具
 brew install --cask antigravity-tools  # AI 服务账号管理工具
 brew install --cask noi                # AI 工具集合
+brew install --cask cmux               # Lightweight macOS terminal for AI coding agents
 
 # 输入法
 brew install --cask fcitx5-pinyin      # Fcitx5 输入法 - 拼音版
@@ -123,6 +125,7 @@ brew uninstall rime-wanxiang-updater
 | [cc-switch](Casks/cc-switch.rb) | Claude Code/Codex 配置管理器 | `brew install --cask tinypkg/tap/cc-switch` | `3.9.1` | 🍎 Intel & ARM |
 | [antigravity-tools](Casks/antigravity-tools.rb) | AI 服务账号管理工具 | `brew install --cask tinypkg/tap/antigravity-tools` | `3.3.49` | 🍎 Intel & ARM 🐧 Intel & ARM |
 | [noi](Casks/noi.rb) | AI 工具集合 | `brew install --cask tinypkg/tap/noi` | `1.1.0` | 🍎 Intel & ARM |
+| [cmux](Casks/cmux.rb) | Lightweight macOS terminal for AI coding agents | `brew install --cask tinypkg/tap/cmux` | `0.63.2` | 🍎 macOS Sequoia+ |
 
 ### 🔤 输入法
 
@@ -377,6 +380,19 @@ brew uninstall rime-wanxiang-updater
 
   # 自动检测最新版本
   gh workflow run update-puremac-version.yml
+  ```
+
+### cmux 自动更新
+- **触发方式**: 每12小时定时检查 + 手动触发（可自动检测最新版本）
+- **工作流**: `.github/workflows/update-cmux-version.yml`
+- **功能**: 自动从 GitHub Releases 检测最新版本，下载 macOS DMG，计算 SHA256 校验和
+- **使用方法**:
+  ```bash
+  # 手动指定版本
+  gh workflow run update-cmux-version.yml -f version=0.63.2
+
+  # 自动检测最新版本
+  gh workflow run update-cmux-version.yml
   ```
 
 ## 🛠️ 开发指南
