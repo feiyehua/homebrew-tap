@@ -1,0 +1,151 @@
+name: Update Herdr Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (e.g., 0.4.11). Leave empty to auto-detect latest version."
+        required: false
+        type: string
+  schedule:
+    - cron: "0 */12 * * *"
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Get latest version and check for updates
+        id: version_check
+        run: |
+          # Get current version from formula
+          CURRENT_VERSION=$(grep 'version "' Formula/herdr.rb | sed 's/.*version "\(.*\)".*/\1/')
+          echo "Current version: $CURRENT_VERSION"
+
+          # Use manually specified version if provided
+          if [ -n "${{ inputs.version }}" ]; then
+            NEW_VERSION="${{ inputs.version }}"
+            echo "Using manually specified version: $NEW_VERSION"
+          else
+            # Fetch latest version from GitHub API
+            RELEASE_INFO=$(curl -f -s "https://api.github.com/repos/ogulcancelik/herdr/releases/latest")
+            if [ $? -ne 0 ]; then
+              echo "Failed to fetch release info"
+              exit 1
+            fi
+
+            NEW_VERSION=$(echo "$RELEASE_INFO" | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' | head -n 1)
+            if [ -z "$NEW_VERSION" ]; then
+              echo "Failed to parse version from release info"
+              exit 1
+            fi
+            echo "Latest available version: $NEW_VERSION"
+          fi
+
+          # Compare versions
+          if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+            echo "No update needed. Current version ($CURRENT_VERSION) is up to date."
+            echo "should_update=false" >> $GITHUB_OUTPUT
+          else
+            echo "Update available: $CURRENT_VERSION -> $NEW_VERSION"
+            echo "should_update=true" >> $GITHUB_OUTPUT
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download macos-x86_64 binary
+        if: steps.version_check.outputs.should_update == 'true'
+        run: |
+          curl -f -L -o /tmp/herdr-x86_64 "https://github.com/ogulcancelik/herdr/releases/download/v${{ steps.version_check.outputs.new_version }}/herdr-macos-x86_64"
+          if [ ! -f /tmp/herdr-x86_64 ]; then
+            echo "Failed to download macos-x86_64 binary"
+            exit 1
+          fi
+
+      - name: Download macos-aarch64 binary
+        if: steps.version_check.outputs.should_update == 'true'
+        run: |
+          curl -f -L -o /tmp/herdr-aarch64 "https://github.com/ogulcancelik/herdr/releases/download/v${{ steps.version_check.outputs.new_version }}/herdr-macos-aarch64"
+          if [ ! -f /tmp/herdr-aarch64 ]; then
+            echo "Failed to download macos-aarch64 binary"
+            exit 1
+          fi
+
+      - name: Calculate checksums
+        if: steps.version_check.outputs.should_update == 'true'
+        id: checksums
+        run: |
+          # Verify binary files exist and have reasonable size
+          if [ ! -s /tmp/herdr-x86_64 ] || [ $(stat -c%s /tmp/herdr-x86_64) -lt 1000 ]; then
+            echo "macos-x86_64 binary is missing or too small"
+            exit 1
+          fi
+          if [ ! -s /tmp/herdr-aarch64 ] || [ $(stat -c%s /tmp/herdr-aarch64) -lt 1000 ]; then
+            echo "macos-aarch64 binary is missing or too small"
+            exit 1
+          fi
+
+          X86_64_SHA256=$(sha256sum /tmp/herdr-x86_64 | awk '{print $1}')
+          AARCH64_SHA256=$(sha256sum /tmp/herdr-aarch64 | awk '{print $1}')
+          echo "x86_64_sha256=$X86_64_SHA256" >> $GITHUB_OUTPUT
+          echo "aarch64_sha256=$AARCH64_SHA256" >> $GITHUB_OUTPUT
+          echo "macos-x86_64 SHA256: $X86_64_SHA256"
+          echo "macos-aarch64 SHA256: $AARCH64_SHA256"
+
+      - name: Update formula file
+        if: steps.version_check.outputs.should_update == 'true'
+        run: |
+          # Update version
+          sed -i "s/version \".*\"/version \"${{ steps.version_check.outputs.new_version }}\"/" Formula/herdr.rb
+
+          # Update version in URLs (using #{version} interpolation, no change needed in URL pattern)
+          # URLs use v#{version} pattern which will auto-update when version changes
+
+          # Update intel sha256
+          sed -i '/if Hardware::CPU.intel?/,/end/{s/sha256 ".*"/sha256 "${{ steps.checksums.outputs.x86_64_sha256 }}"/}' Formula/herdr.rb
+
+          # Update arm sha256
+          sed -i '/if Hardware::CPU.arm?/,/if Hardware::CPU.intel?/{s/sha256 ".*"/sha256 "${{ steps.checksums.outputs.aarch64_sha256 }}"/}' Formula/herdr.rb
+
+      - name: Show changes
+        if: steps.version_check.outputs.should_update == 'true'
+        run: |
+          git diff Formula/herdr.rb
+
+      - name: Commit and push changes
+        if: steps.version_check.outputs.should_update == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Formula/herdr.rb
+
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: update Herdr to version ${{ steps.version_check.outputs.new_version }}"
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Current Version**: ${{ steps.version_check.outputs.current_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest Version**: ${{ steps.version_check.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Update Required**: ${{ steps.version_check.outputs.should_update }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.version_check.outputs.should_update }}" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Successfully updated to version ${{ steps.version_check.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ No update needed. Already on the latest version." >> $GITHUB_STEP_SUMMARY
