@@ -149,3 +149,4 @@ jobs:
           else
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "ℹ️ No update needed. Already on the latest version." >> $GITHUB_STEP_SUMMARY
+          fi
