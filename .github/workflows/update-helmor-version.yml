@@ -1,0 +1,139 @@
+name: Update Helmor Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (e.g., 0.12.1). Leave empty to auto-detect latest version."
+        required: false
+        type: string
+  schedule:
+    - cron: "0 */12 * * *"
+
+jobs:
+  update-cask:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Get latest version and check for updates
+        id: version_check
+        run: |
+          # 获取当前 cask 中的版本
+          CURRENT_VERSION=$(grep 'version "' Casks/helmor.rb | sed 's/.*version "\(.*\)".*/\1/')
+          echo "Current version: $CURRENT_VERSION"
+
+          # 如果手动指定了版本，使用指定的版本
+          if [ -n "${{ inputs.version }}" ]; then
+            NEW_VERSION="${{ inputs.version }}"
+            echo "Using manually specified version: $NEW_VERSION"
+          else
+            # 从 GitHub API 获取最新版本
+            RELEASE_INFO=$(curl -f -s "https://api.github.com/repos/dohooo/helmor/releases/latest")
+            if [ $? -ne 0 ]; then
+              echo "Failed to fetch release info"
+              exit 1
+            fi
+
+            # 解析版本号，格式为 vX.Y.Z
+            NEW_VERSION=$(echo "$RELEASE_INFO" | jq -r '.tag_name' | sed 's/^v//')
+            if [ -z "$NEW_VERSION" ]; then
+              echo "Failed to parse version from release info"
+              exit 1
+            fi
+            echo "Latest available version: $NEW_VERSION"
+          fi
+
+          # 比较版本
+          if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+            echo "No update needed. Current version ($CURRENT_VERSION) is up to date."
+            echo "should_update=false" >> $GITHUB_OUTPUT
+          else
+            echo "Update available: $CURRENT_VERSION -> $NEW_VERSION"
+            echo "should_update=true" >> $GITHUB_OUTPUT
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download DMG files
+        if: steps.version_check.outputs.should_update == 'true'
+        run: |
+          # Download arm64 (aarch64) DMG
+          curl -f -L -o /tmp/helmor-arm64.dmg "https://github.com/dohooo/helmor/releases/download/v${{ steps.version_check.outputs.new_version }}/Helmor_${{ steps.version_check.outputs.new_version }}_aarch64.dmg"
+          if [ ! -s /tmp/helmor-arm64.dmg ] || [ $(stat -c%s /tmp/helmor-arm64.dmg) -lt 100000 ]; then
+            echo "arm64 DMG file is missing or too small"
+            exit 1
+          fi
+
+          # Download x64 DMG
+          curl -f -L -o /tmp/helmor-x64.dmg "https://github.com/dohooo/helmor/releases/download/v${{ steps.version_check.outputs.new_version }}/Helmor_${{ steps.version_check.outputs.new_version }}_x64.dmg"
+          if [ ! -s /tmp/helmor-x64.dmg ] || [ $(stat -c%s /tmp/helmor-x64.dmg) -lt 100000 ]; then
+            echo "x64 DMG file is missing or too small"
+            exit 1
+          fi
+
+      - name: Calculate checksums
+        if: steps.version_check.outputs.should_update == 'true'
+        id: checksums
+        run: |
+          ARM64_SHA256=$(sha256sum /tmp/helmor-arm64.dmg | awk '{print $1}')
+          X64_SHA256=$(sha256sum /tmp/helmor-x64.dmg | awk '{print $1}')
+          echo "arm64_sha256=$ARM64_SHA256" >> $GITHUB_OUTPUT
+          echo "x64_sha256=$X64_SHA256" >> $GITHUB_OUTPUT
+          echo "arm64 SHA256: $ARM64_SHA256"
+          echo "x64 SHA256: $X64_SHA256"
+
+      - name: Update cask file
+        if: steps.version_check.outputs.should_update == 'true'
+        run: |
+          # Update version
+          sed -i "s/version \".*\"/version \"${{ steps.version_check.outputs.new_version }}\"/" Casks/helmor.rb
+
+          # Update sha256 in on_arm block
+          sed -i '/on_arm do/,/end/{s/sha256 ".*"/sha256 "${{ steps.checksums.outputs.arm64_sha256 }}"/}' Casks/helmor.rb
+
+          # Update sha256 in on_intel block
+          sed -i '/on_intel do/,/end/{s/sha256 ".*"/sha256 "${{ steps.checksums.outputs.x64_sha256 }}"/}' Casks/helmor.rb
+
+      - name: Show changes
+        if: steps.version_check.outputs.should_update == 'true'
+        run: |
+          git diff Casks/helmor.rb
+
+      - name: Commit and push changes
+        if: steps.version_check.outputs.should_update == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Casks/helmor.rb
+
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: update Helmor to version ${{ steps.version_check.outputs.new_version }}"
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Current Version**: ${{ steps.version_check.outputs.current_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest Version**: ${{ steps.version_check.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Update Required**: ${{ steps.version_check.outputs.should_update }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.version_check.outputs.should_update }}" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Successfully updated to version ${{ steps.version_check.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No update needed. Already on the latest version." >> $GITHUB_STEP_SUMMARY
+          fi
