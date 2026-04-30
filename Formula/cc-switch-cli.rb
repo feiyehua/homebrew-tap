@@ -10,7 +10,7 @@ class CcSwitchCli < Formula
       sha256 "40087292b845797e54a58423f898422b804f8fb75c77233e44091c39476c7561"
 
       def install
-        bin.install "cc-switch-cli"
+        bin.install "cc-switch"
       end
     end
     if Hardware::CPU.intel?
@@ -18,14 +18,14 @@ class CcSwitchCli < Formula
       sha256 "31ae4f2b65127ad43f367790848e63373c0aaad58b9335d1b56f63945942fc3b"
 
       def install
-        bin.install "cc-switch-cli"
+        bin.install "cc-switch"
       end
     end
   end
 
   def post_install
     # Remove quarantine attribute from the binary
-    chmod "+x", bin/"cc-switch-cli"
+    chmod "+x", bin/"cc-switch"
     system_command "/usr/bin/xattr",
                    args: ["-cr", bin/"cc-switch-cli"],
                    sudo: false
@@ -43,6 +43,6 @@ class CcSwitchCli < Formula
   end
 
   test do
-    system "#{bin}/cc-switch-cli", "--version"
+    system "#{bin}/cc-switch", "--version"
   end
 end
